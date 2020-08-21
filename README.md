@@ -13,7 +13,7 @@ We recommend that you read the [Forest Plantation Appendix of the Algorithm Theo
 
 ## How to use
 
-First, you need to copy these scripts (including those in [utils folder](../utils)) to your Google Earth Engine (**GEE**) account.
+First, you need to copy these scripts (including those in [utils folder](./utils)) to your Google Earth Engine (**GEE**) account.
 
 Then, in your **GEE** account, go to the **Assets tab** and create the following directory structure:
 
@@ -32,7 +32,7 @@ To run the classification, follow these steps:
 
 1. Open the script **forest_plantation/classification.js**;
 
-2. On **line 2** (variable `api`), set the path to the [api.js](../utils/api.js) script you copied to your GEE account
+2. On **line 2** (variable `api`), set the path to the [api.js](./utils/api.js) script you copied to your GEE account
 
 3. On **line 7** (variable `outputCollection`), set the output path for the classification results;
 
