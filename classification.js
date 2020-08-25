@@ -123,7 +123,7 @@ years.forEach(function(year){
     
     var mosaicFilename = filename + "_mosaic";
         
-    Map.addLayer(mosaic, {bands: ['WET1_NIR_median', 'WET1_SWIR1_median', 'WET1_RED_median'], min: 100, max: 5000}, mosaicFilename);
+    Map.addLayer(mosaic, {bands: ['WET1_NIR_qmo', 'WET1_SWIR1_qmo', 'WET1_RED_qmo'], min: 100, max: 5000}, mosaicFilename);
     
     mosaic = mosaic.select(featureSpace).multiply(10000);
         
