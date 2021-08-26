@@ -1,127 +1,160 @@
+// Set the path to the temporal_spatial_filters.js script you copied to your GEE account:
+var filters = require('users/your_username/repository:utils/temporal_spatial_filters.js');
+
+var temporal = filters.temporal;
+var spatial = filters.spatial;
+
 // set the input path to the raw classification result:
-var input = 'users/your_username/MAPBIOMAS/C5/FOREST_PLANTATION/RESULTS/RAW';
+var input = 'users/your_username/MAPBIOMAS/C6/FOREST_PLANTATION/RESULTS/RAW';
 
 // set the path for the filtered result:
-var output = 'users/your_username/MAPBIOMAS/C5/FOREST_PLANTATION/RESULTS/TEMPORAL_SPATIAL_FILTERED';
+var output = 'users/your_username/MAPBIOMAS/C6/FOREST_PLANTATION/RESULTS/TEMPORAL_SPATIAL_FILTERED';
 
-// set the years interval you want to filter:
-var startYear = 2015
-var endYear = 2019
+var add = ee.Geometry.Polygon(
+  [[[-43.55611927267485, -2.771066486650524],
+  [-43.55611927267485, -13.371738608730073],
+  [-37.22799427267485, -13.371738608730073],
+  [-37.22799427267485, -2.771066486650524]]], null, false)
 
-var brasilMask = ee.Image("users/agrosatelite_mapbiomas/COLECAO_5/PUBLIC/GRIDS/BIOMAS_IBGE_250K_BUFFER");
+var geometry = ee.Geometry.Polygon(
+  [[[-74.74844337202919, 5.676986563126004],
+  [-74.74844337202919, -34.11108145272765],
+  [-34.40664649702919, -34.11108145272765],
+  [-34.40664649702919, 5.676986563126004]]], null, false)
 
-var classOfInterest = 1;
-var years = range(startYear, endYear - startYear + 1);
+var collection = ee.ImageCollection(input)
 
-/** TEMPORAL FILTER SETTINGS **/
-var offset = 2;
-var globalThreshold = 2;
-
-/** SPATIAL FILTER SETTINGS **/
-var minConnectPixel = 6
-
-var imageCollection = ee.List.sequence(startYear, endYear)
-  .map(function(year) {
-    var yearMosaic = ee.ImageCollection(input)
+collection = ee.List.sequence(1985, 2019)
+  .map(function (year) {
+    var yearlyMosaic = collection
       .filterMetadata('year', 'equals', year)
-      .max();
-    
-    return yearMosaic.set('year', year)
+      .or()
+      .set('year', year);
+
+    return yearlyMosaic
   })
 
-var collection = ee.ImageCollection(imageCollection).sort('year').toList(40);
+collection = ee.ImageCollection(collection)
 
-function range(start, count) {
-  return Array.apply(0, Array(count))
-    .map(function (element, index) { 
-      return index + start;  
-  });
-}
+// define masks
+var brasil = ee.Image('projects/mapbiomas-workspace/AUXILIAR/ESTATISTICAS/COLECAO5/country-raster')
+var ESTADOS = ee.FeatureCollection('users/agrosatelite_mapbiomas/REGIONS/ibge_estados_2019')
 
-var breakList = function(list, index, offset, min, max, threshold){
-  var start = index - offset
-  var end = index + offset
-  if(start < min){
-    threshold = 1 + threshold + start
-    start = min
-  }
-  if(end > max){
-    threshold = 1 + threshold + (max - end)
-    end = max
-  }
-  var left = list.slice(start, index)
-  var center = ee.Image(list.get(index))
-  var right = list.slice(index + 1, end + 1)
-  return [left, center, right, threshold]
-}
+var regions = ESTADOS
+  .filter(ee.Filter.inList('SIGLA_UF', ['PA', 'TO', 'AP', 'MA', 'CE', 'MT', 'RS']))
+  .merge(add)
 
-var images = [];
-
-for(var index=0; index <= years.length - 1; index++) {
-  
-  /** TEMPORAL FILTER **/
-  
-  var nodes = breakList(collection, index, offset, 0, years.length - 1, globalThreshold);
-  var left = nodes[0] 
-  var center = nodes[1] 
-  var right = nodes[2] 
-  var threshold = nodes[3]
-  
-  var year = years[index];
-
-  center = center.unmask(null).eq(classOfInterest);
-  left = ee.ImageCollection(left);
-  right = ee.ImageCollection(right);
-
-  var sides = ee.ImageCollection(left.merge(right)).map(function(img){
-    return ee.Image(img).eq(classOfInterest);
-  }).sum();
-  
-  var mask = center.add(sides.eq(0)).neq(2);
-  var image = center.add(sides).gte(threshold + 1);
-
-  var temporalFiltered = ee.Image(center.add(image)).updateMask(mask).gte(1)
-    .set('year', year);
-
-  collection = collection.set(index, temporalFiltered);
-  
-  /** SPATIAL_FILTER **/
-  
-  var connPixels = temporalFiltered.unmask()
-    .connectedPixelCount(100, true)
-    .rename('conn')
-  
-  var mode = temporalFiltered.unmask()
-    .focal_mode(2, 'square', 'pixels')
-    .updateMask(connPixels.lte(minConnectPixel))
-  
-  var temporalSpatialFiltered = temporalFiltered.blend(mode)
-  
-  images.push(temporalSpatialFiltered.rename("classification_" + year));
-}
-
-var image = ee.Image(images);
-
-var vis = {
-  bands: ['classification_' + endYear],
-  min: 0,
-  max: 1,
-  palette: ['WHITE', 'BLACK'],
-  format: 'png'
-}
-var raw = ee.ImageCollection(imageCollection).filterMetadata('year', 'equals', endYear).first().rename('classification_' + endYear)
-
-Map.addLayer(raw.unmask(), vis, 'Raw')
-Map.addLayer(image.unmask(), vis, 'Temporal-Spatial Filtered')
+var mask = ee.Image(1).clip(regions)
 
 
-var filename = 'forest_plantation_temporal_filter';
+// get regions to filter
+var collection_w5t2 = collection.map(function (image) {
+  return image.updateMask(mask).updateMask(brasil)
+})
+
+var collection_w5t3 = collection.map(function (image) {
+  return image.updateMask(brasil)
+})
+
+// filter a
+
+var filtersToApply = [
+  spatial.build(spatial.minConnnectedPixels(6)),
+
+  temporal.build(temporal.getMovingWindow(1986, 1986, 3), temporal.thresholdFilter(2)), // 3 years window, 1986 only
+  temporal.build(temporal.getMovingWindow(1987, 2019, 5), temporal.thresholdFilter(2)), // 7 years window, 1988 to 2017
+
+  spatial.build(spatial.minConnnectedPixels(6)),
+]
+
+var filteredCollection__w5t2 = filters.applyFilters(filtersToApply, collection_w5t2);
+
+
+// filter b
+
+var filtersToApply = [
+  spatial.build(spatial.minConnnectedPixels(6)),
+
+  temporal.build(temporal.getMovingWindow(1986, 1995, 3), temporal.thresholdFilter(2)),
+  temporal.build(temporal.getMovingWindow(1995, 2017, 5), temporal.thresholdFilter(3)),
+  temporal.build(temporal.getMovingWindow(2018, 2020, 3), temporal.thresholdFilter(1)),
+
+  spatial.build(spatial.minConnnectedPixels(6)),
+]
+
+var filteredCollection__w5t3 = filters.applyFilters(filtersToApply, collection_w5t3);
+
+
+
+var filteredCollection = filteredCollection__w5t2.merge(filteredCollection__w5t3)
+
+var filteredCollection = ee.List.sequence(1985, 2020).getInfo().map(function (year) {
+  var result = filteredCollection.filterMetadata('year', 'equals', year).max()
+  var merged = result.unmask().rename('classification').set('year', year)
+  return merged
+}).sort('year')
+
+filteredCollection = ee.ImageCollection(filteredCollection)
+
+
+// copy 1986 to 1985
+var firstYear = filteredCollection.filterMetadata('year', 'equals', 1986).first();
+filteredCollection = filteredCollection
+  .filter(ee.Filter.inList('year', [1985]).not())
+  .merge(ee.ImageCollection([
+    firstYear.set('year', 1985)
+  ]))
+  .sort('year')
+
+
+// set years greather than 2015 as forest plantation 
+var setToForestPlantation_1 = filteredCollection.filter(ee.Filter.inList('year', [2013, 2014, 2015])).and()
+
+var last5Year = filteredCollection
+  .filterMetadata('year', 'greater_than', 2015)
+  .map(function (image) {
+    return image.or(setToForestPlantation_1).set('year', image.getNumber('year'))
+  })
+
+filteredCollection = filteredCollection
+  .filterMetadata('year', 'not_greater_than', 2015)
+  .merge(last5Year).sort('year')
+
+
+// filled
+
+var filteredCollection = filteredCollection
+  .merge(ee.ImageCollection([
+    ee.Image(0).rename('classification').set('year', 1984),
+    ee.Image(0).rename('classification').set('year', 2021)
+  ]))
+  .sort('year')
+
+var filled = ee.List.sequence(1985, 2020).getInfo().map(function (year) {
+  var before = filteredCollection.filterMetadata('year', 'less_than', year).sum()
+  var thisYear = filteredCollection.filterMetadata('year', 'equals', year).first().unmask()
+  var after = filteredCollection.filterMetadata('year', 'greater_than', year).sum()
+
+  return thisYear.or(before.and(after)).set('year', year)
+})
+
+filled = ee.ImageCollection(filled)
+
+
+// to bands
+var raw = filters.toBandsByYear(collection).byte().updateMask(brasil)
+var filtered = filters.toBandsByYear(filled).byte().updateMask(brasil)
+
+var visYear = 2019
+
+Map.addLayer(raw.selfMask(), { bands: 'b' + visYear, palette: ['RED'] }, 'Raw ' + visYear)
+Map.addLayer(filtered.selfMask(), { bands: 'b' + visYear, palette: ['BLUE'] }, 'Filtered ' + visYear)
 
 Export.image.toAsset({
-  image: image.byte(),
-  description: filename,
+  image: filtered.unmask().byte(),
+  description: 'FOREST_PLANTATION_TEMPORAL_SPATIAL_FILTER',
   assetId: output,
+  region: geometry,
   scale: 30,
-  region: brasilMask.geometry(),
-  maxPixels: 1.0E13,
-});
+  maxPixels: 10e10
+})
