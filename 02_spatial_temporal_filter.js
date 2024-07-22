@@ -1,31 +1,31 @@
 /**
  * @name
- *      FOREST PLANTATION SPATIAL-TEMPORAL FILTERS C7 
+ *      FOREST PLANTATION SPATIAL-TEMPORAL FILTERS C9 
  * 
  * @description
- *      Filter for Mapbiomas Collection 7 Forest Plantation class.
+ *      Filter for Mapbiomas Collection 9 Forest Plantation class.
  * 
  * @author
- *      Agrosatélite
- *      mapbiomas@agrosatelite.com.br
+ *      Remap
+ *      mapbiomas@remapgeo.com
  *
  * @version
- *  MapBiomas Collection 7.0
+ *  MapBiomas Collection 9.0
  * 
  */
  
  
-var filters = require('users/agrosatelite_mapbiomas/mapbiomas_tutorial:collection6/utils/temporal_spatial_filters.js');
+var filters = require('users/your_user/your_path_to:utils/temporal_spatial_filters.js');
 
 var temporal = filters.temporal; 
 var spatial = filters.spatial;
 
 
 // set the input path to the raw classification result:
-var input = 'users/your_username/MAPBIOMAS/C7/FOREST_PLANTATION/RESULTS/RAW';
+var input = 'users/your_username/MAPBIOMAS/C9/FOREST_PLANTATION/RESULTS/RAW';
 
 // set the path for the filtered result:
-var output = 'users/your_username/MAPBIOMAS/C7/FOREST_PLANTATION/RESULTS/TEMPORAL_SPATIAL_FILTERED';
+var output = 'users/your_username/MAPBIOMAS/C9/FOREST_PLANTATION/RESULTS/TEMPORAL_SPATIAL_FILTERED';
 
 var collection = ee.ImageCollection(input)
 
@@ -33,7 +33,7 @@ var collection = ee.ImageCollection(input)
 
 // define masks
 var brasil = ee.Image('projects/mapbiomas-workspace/AUXILIAR/ESTATISTICAS/COLECAO5/country-raster')
-var ESTADOS = ee.FeatureCollection('users/agrosatelite_mapbiomas/REGIONS/ibge_estados_2019')
+var ESTADOS = ee.FeatureCollection('projects/mapbiomas-workspace/AUXILIAR/estados-2016')
 
 
 var regions = ESTADOS.filter(ee.Filter.or(

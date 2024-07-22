@@ -1,37 +1,37 @@
 /**
  * @name
- *      FOREST PLANTATION CLASSIFICATION C7
+ *      FOREST PLANTATION CLASSIFICATION C9
  * 
  * @description
- *      Classification script for Mapbiomas Collection 7 Forest Plantation class.
+ *      Classification script for Mapbiomas Collection 9 Forest Plantation class.
  * 
  * @author
- *      Agrosatélite
- *      mapbiomas@agrosatelite.com.br
+ *      Remap
+ *      mapbiomas@remapgeo.com
  *
  * @version
- *  MapBiomas Collection 7.0
+ *  MapBiomas Collection 9.0
  *   
  */
 
 
 // Set the path to the scripts you copied to your GEE account:
 //Indexes
-  var index = require('users/agrosatelite_mapbiomas/mapbiomas_tutorial:collection7/utils/indexes.js');
+  var index = require('users/your_user/your_path_to:utils/indexes.js');
 //Normalization
-  var getNormalizedCollection = require("users/agrosatelite_mapbiomas/mapbiomas_tutorial:collection7/utils/normalization.js").getNormalizedCollection;
+  var getNormalizedCollection = require("users/your_user/your_path_to:utils/normalization.js").getNormalizedCollection;
 //Cloud Mask
-  var cloudLib = require("users/agrosatelite_mapbiomas/mapbiomas_tutorial:collection7/utils/cloud.js");
+  var cloudLib = require("users/your_user/your_path_to:utils/cloud.js");
 
 // ============================================================================
 //                                  IMPORTS
 // ============================================================================
 
 // Landsat Grid Collection (with peak vegetation month as a property) 
-var gridCollection = ee.FeatureCollection("users/agrosatelite_mapbiomas/COLECAO_7/GRIDS/BRASIL_COMPLETO_PEAK")
+var gridCollection = ee.FeatureCollection("users/mapbiomas1/PUBLIC/GRIDS/BRASIL_COMPLETO_PEAK")
 
 // Subtiles for stratified sampling
-var SubTile = ee.FeatureCollection("users/agrosatelite_mapbiomas/COLECAO_7/GRIDS/SUBTILES")
+var SubTile = ee.FeatureCollection("users/mapbiomas1/PUBLIC/GRIDS/SUBTILES")
 
 
 
@@ -39,7 +39,7 @@ var SubTile = ee.FeatureCollection("users/agrosatelite_mapbiomas/COLECAO_7/GRIDS
 //                                  INPUTS
 // ============================================================================
 
-var outputCollection = 'users/your_username/MAPBIOMAS/C7/FOREST_PLANTATION/RESULTS/RAW/'
+var outputCollection = 'users/your_username/MAPBIOMAS/C9/FOREST_PLANTATION/RESULTS/RAW/'
 
 var years = [2014]
 

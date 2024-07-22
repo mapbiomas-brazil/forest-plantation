@@ -3,7 +3,7 @@
     <h1>Forest Plantation</h1>
 </div>
 
-Developed by ***Agrosatélite Geotecnologia Aplicada Ltda***.
+Developed by ***Remap Geotecnologia Ltda***.
 
 ## About
 
@@ -17,11 +17,11 @@ First, you need to copy these scripts (including those in [utils folder](./utils
 
 Then, in your **GEE** account, go to the **Assets tab**, create the following directory structure:
 
- - MAPBIOMAS/C7/FOREST_PLANTATION/RESULTS
+ - MAPBIOMAS/C9/FOREST_PLANTATION/RESULTS
 
 and create one **Image Collections**:
 
- - MAPBIOMAS/C7/FOREST_PLANTATION/RESULTS/**RAW**
+ - MAPBIOMAS/C9/FOREST_PLANTATION/RESULTS/**RAW**
 
 ### Classification
 
